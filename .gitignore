@@ -1,0 +1,8 @@
+# Created by .ignore support plugin (hsz.mobi)
+
+.idea/
+server/
+dump_online.sql
+dump-online.sh
+workingLogs/
+tar/

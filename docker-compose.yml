@@ -1,0 +1,186 @@
+#docker 综合服务描述符
+#通过 docker stack deploy --compose-file docker-compose-test.yml cs-test
+#即可开启完整的应用程序
+version: "3"
+services:
+
+#这个服务器可以帮忙测试
+  mysqlAdmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      - PMA_HOST=mysql
+      - SET_CONTAINER_TIMEZONE=true
+      - CONTAINER_TIMEZONE=Asia/Shanghai
+    depends_on:
+      - mysql
+
+  mysql:
+    image: registry.cn-shanghai.aliyuncs.com/mingshz/mysql-alirds
+    environment:
+      - MYSQL_PASSWORD=red
+      - MYSQL_DATABASE=red
+      - MYSQL_USER=red
+      - TZ=Asia/Shanghai
+      # - MYSQL_ROOT_PASSWORD=111111
+    volumes:
+      - database:/var/lib/mysql
+      # - /etc/localtime:/etc/localtime
+    ports:
+      - 3406:3306
+#      web这台服务器内存比较充足
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - node.role==manager
+
+#文件上传服务器
+  fileServer:
+    image: registry.cn-hongkong.aliyuncs.com/mingshz/xp-file-server:latest
+    volumes:
+      - /dev/urandom:/dev/random
+      # - /etc/localtime:/etc/localtime
+      - ./_config.properties:/usr/local/tomcat/config.properties
+      - ./_jdbc.properties:/usr/local/tomcat/dbcp.properties
+      - ./files:/files
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - node.labels.ENABLE_ACCOUNT==true
+
+#文件获取服务器
+  fileServerResource:
+    image: nginx
+    volumes:
+      - ./files:/usr/share/nginx/html
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - node.labels.ENABLE_ACCOUNT==true
+
+  redServerResource:
+    image: nginx
+    volumes:
+      - red_files:/usr/share/nginx/html
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - node.labels.ENABLE_RED==true
+
+  redis_server:
+    image: redis
+    environment:
+      - TZ=Asia/Shanghai
+      - SET_CONTAINER_TIMEZONE=true
+      - CONTAINER_TIMEZONE=Asia/Shanghai
+    volumes:
+      - redis_data:/data
+    ports:
+      - 6479:6379
+    # deploy:
+    #   placement:
+    #     constraints:
+    #        - node.role==manager
+
+  account_server:
+    image: registry.cn-hongkong.aliyuncs.com/mingshz/xp-account:latest
+    environment:
+      - TZ=Asia/Shanghai
+      - JPDA_ENABLE=true
+      - JPDA_ADDRESS=8000
+#      use 8000 port
+    volumes:
+      - /dev/urandom:/dev/random
+      # - /etc/localtime:/etc/localtime
+#      - server_rs:/data/resources
+#      - ./workingLogs:/usr/local/tomcat/logs
+#      - ./context.xml:/usr/local/tomcat/conf/Catalina/localhost/context.xml.default
+      - ./_config.properties:/usr/local/tomcat/config.properties
+      - ./_jdbc.properties:/usr/local/tomcat/jdbc.properties
+    ports:
+      - 8280:8080
+      - 8002:8000
+    depends_on:
+      - mysql
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - node.labels.ENABLE_ACCOUNT==true
+
+  red_server:
+      image: registry.cn-hongkong.aliyuncs.com/mingshz/xp-bb:latest
+#      image: xp-bb
+      environment:
+        - TZ=Asia/Shanghai
+#        是否开启调试
+        - JPDA_ENABLE=true
+#必须挂起等待调试器
+#        - JPDA_SUSPEND=y
+#调试器的端口
+        - JPDA_ADDRESS=8000
+      volumes:
+        - /dev/urandom:/dev/random
+        # - /etc/localtime:/etc/localtime
+  #      - server_rs:/data/resources
+#        - ./workingLogs:/usr/local/tomcat/logs
+        - ./context.xml:/usr/local/tomcat/conf/Catalina/localhost/context.xml.default
+        - ./_config.properties:/usr/local/tomcat/config.properties
+        - red_files:/files
+      # deploy:
+      #   placement:
+      #     constraints:
+      #       - node.labels.ENABLE_RED==true
+      depends_on:
+        - redis_server
+        - mysql
+      ports:
+        - 8001:8000
+        - 8180:8080
+  
+  openfire:
+      image: registry.cn-hongkong.aliyuncs.com/mingshz/custom-openfire:latest
+#      image: custom-openfire
+      environment:
+        - TZ=Asia/Shanghai
+        - JPDA_ENABLED=true
+        - SET_CONTAINER_TIMEZONE=true
+        - CONTAINER_TIMEZONE=Asia/Shanghai
+      volumes:
+        - ./openfire.xml:/opt/openfire/conf/openfire.xml
+        - ./develop_cer.p12:/opt/openfire/conf/develop_cer.p12
+      ports:
+        - 5222:5222
+        - 8004:8000
+      depends_on:
+        - mysql
+
+  proxy:
+    image: nginx
+    volumes:
+      - ./proxy.nginx:/etc/nginx/conf.d/default.conf
+      - ./cert:/etc/nginx/cert
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - account_server
+      - red_server
+      - mysqlAdmin
+      - fileServer
+      - fileServerResource
+      - redServerResource
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - node.role==manager
+
+volumes:
+  redis_data: # redis 数据区
+  red_files:
+  database: #  数据库区域
+#  server_rs: # 服务端资源
+
+#file server 现在的配置
+#fileServer=http://app.xiaopao69.com/fileServer
+
+#curl -v http://localhost:9090/plugins/restapi/v1/users/loginCheck
+#curl -v http://localhost:9090/restapi/v1/users/loginCheck

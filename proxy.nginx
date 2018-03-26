@@ -1,0 +1,205 @@
+server {
+    listen       80;
+    server_name  www.*;
+    rewrite ^(.*) https://$host$1 permanent;
+}
+
+server {
+    listen       443;
+    server_name  www.*;
+
+    ssl                  on;
+    ssl_certificate      cert/www.crt;
+    ssl_certificate_key  cert/www.key;
+    ssl_session_timeout 5m;
+    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_prefer_server_ciphers on;
+
+    location /account/
+    {
+        proxy_pass http://account_server:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    location /red-restful/
+    {
+        proxy_pass http://red_server:8080;
+        proxy_cookie_path       /red-restful /;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location ~ /red-admin/upload/\\w+\.\\w+$ {
+        rewrite  ^/red-admin(.*)  /$1 break;
+        proxy_pass http://redServerResource:80;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        Host $http_host;
+    }
+
+    location /red-admin/ImUpload/\\w+\.\\w+$ {
+        rewrite  ^/red-admin(.*)  /$1 break;
+        proxy_pass http://redServerResource:80;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        Host $http_host;
+    }
+
+    location /red-admin/ {
+        proxy_pass http://red_server:8080;
+        proxy_cookie_path       /red-admin /red-admin;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        Host $http_host;
+    }
+
+    location =/{
+        proxy_pass http://47.52.234.194:8280/upload0.html;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location ^~ /{
+        proxy_pass http://47.52.234.194:8280;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+server {
+    listen       80;
+    server_name  app.*;
+
+    #    代理至我们的openfire实例
+    location =/
+    {
+        proxy_pass http://openfire:9090/login.jsp;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    location /
+    {
+        proxy_pass http://openfire:9090;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    location /plugins/
+    {
+        proxy_pass http://openfire:9090/plugins/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    #docker 配置
+    location /account/
+    {
+        proxy_pass http://account_server:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    location /fileServer/private/upload {
+        proxy_pass http://fileServer:8080;
+        client_max_body_size    50m;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        Host $http_host;
+    }
+    location /fileServer/upload {
+        proxy_pass http://fileServer:8080;
+        client_max_body_size    50m;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        Host $http_host;
+    }
+    location /fileServer/ {
+        proxy_pass http://fileServerResource;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        Host $http_host;
+    }
+}
+
+
+#server {
+#    listen       80 default_server;
+#    server_name  localhost;
+#    location /account/ {
+#        proxy_pass http://account_server:8080;
+#        proxy_set_header        X-Real-IP $remote_addr;
+#        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+#        proxy_set_header        Host $http_host;
+#    }
+#
+#    location /red-restful/ {
+#        proxy_pass http://red_server:8080;
+#        proxy_cookie_path       /red-restful /;
+#        proxy_set_header        X-Real-IP $remote_addr;
+#        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+#        proxy_set_header        Host $http_host;
+#    }
+#
+#    location ~ /red-admin/upload/\\w+\.\\w+$ {
+#        rewrite  ^/red-admin(.*)  /$1 break;
+#        proxy_pass http://redServerResource:80;
+#        proxy_set_header        X-Real-IP $remote_addr;
+#        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+#        proxy_set_header        Host $http_host;
+#    }
+#
+#    location /red-admin/ImUpload/\\w+\.\\w+$ {
+#        rewrite  ^/red-admin(.*)  /$1 break;
+#        proxy_pass http://redServerResource:80;
+#        proxy_set_header        X-Real-IP $remote_addr;
+#        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+#        proxy_set_header        Host $http_host;
+#    }
+#
+#    location /red-admin/ {
+#        proxy_pass http://red_server:8080;
+#        proxy_cookie_path       /red-admin /red-admin;
+#        proxy_set_header        X-Real-IP $remote_addr;
+#        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+#        proxy_set_header        Host $http_host;
+#    }
+#
+#    location /fileServer/private/upload {
+#        proxy_pass http://fileServer:8080;
+#        client_max_body_size    50m;
+#        proxy_set_header        X-Real-IP $remote_addr;
+#        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+#        proxy_set_header        Host $http_host;
+#    }
+#    location /fileServer/upload {
+#        proxy_pass http://fileServer:8080;
+#        client_max_body_size    50m;
+#        proxy_set_header        X-Real-IP $remote_addr;
+#        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+#        proxy_set_header        Host $http_host;
+#    }
+#    location /fileServer/ {
+#        proxy_pass http://fileServerResource;
+#        proxy_set_header        X-Real-IP $remote_addr;
+#        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+#        proxy_set_header        Host $http_host;
+#    }
+#}
+#
+server {
+    listen 80;
+    server_name mysql.*;
+    location / {
+        proxy_pass http://mysqlAdmin;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        Host $http_host;
+    }
+}

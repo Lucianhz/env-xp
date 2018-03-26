@@ -1,0 +1,44 @@
+#docker 综合服务描述符
+#通过 docker stack deploy --compose-file docker-compose-test.yml cs-test
+#即可开启完整的应用程序
+version: "3"
+services:
+
+#这个服务器可以帮忙测试
+  mysqlAdmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      - PMA_HOST=mysql
+      - SET_CONTAINER_TIMEZONE=true
+      - CONTAINER_TIMEZONE=Asia/Shanghai
+    depends_on:
+      - mysql
+    ports:
+      - 80:80
+
+  mysql:
+    image: registry.cn-shanghai.aliyuncs.com/mingshz/mysql-alirds
+    environment:
+      - MYSQL_PASSWORD=red
+      - MYSQL_DATABASE=red
+      - MYSQL_USER=red
+      - TZ=Asia/Shanghai
+      # - MYSQL_ROOT_PASSWORD=111111
+    volumes:
+      - database:/var/lib/mysql
+      # - /etc/localtime:/etc/localtime
+    ports:
+      - 3406:3306
+#      web这台服务器内存比较充足
+    # deploy:
+    #   placement:
+    #     constraints:
+    #       - node.role==manager
+
+volumes:
+  database: #  数据库区域
+#  server_rs: # 服务端资源
+
+#file server 现在的配置
+#fileServer=http://app.xiaopao69.com/fileServer
+
