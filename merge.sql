@@ -55,7 +55,7 @@ SET `state` = 0;
 DELETE FROM `bet_payment_interface`
 WHERE `id` = 'sandbox_alipay';
 INSERT INTO `bet_payment_interface` (`id`, `bankname`, `banktype`, `state`, `remarks`, `type`, `agentid`)
-VALUES ('sandbox_alipay', '测试支付宝', '支付宝', 1, '测试支付宝', 1, 1);
+VALUES ('sandbox_alipay', '测试支付宝', '支付宝', 1, '测试支付宝', 2, 1);
 UPDATE `bet_alipay`
 SET `state` = 0;
 DELETE FROM `bet_alipay`

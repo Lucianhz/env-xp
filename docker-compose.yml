@@ -107,8 +107,8 @@ services:
     #       - node.labels.ENABLE_ACCOUNT==true
 
   red_server:
-      image: registry.cn-hongkong.aliyuncs.com/mingshz/xp-bb:latest
-#      image: xp-bb
+#      image: registry.cn-hongkong.aliyuncs.com/mingshz/xp-bb:latest
+      image: xp-bb
       environment:
         - TZ=Asia/Shanghai
 #        是否开启调试
@@ -137,8 +137,8 @@ services:
         - 8180:8080
   
   openfire:
-      image: registry.cn-hongkong.aliyuncs.com/mingshz/custom-openfire:latest
-#      image: custom-openfire
+#      image: registry.cn-hongkong.aliyuncs.com/mingshz/custom-openfire:latest
+      image: custom-openfire
       environment:
         - TZ=Asia/Shanghai
         - JPDA_ENABLED=true
@@ -153,6 +153,14 @@ services:
       depends_on:
         - mysql
 
+  share:
+#      image: registry.cn-hongkong.aliyuncs.com/mingshz/xp-share:latest
+      image: xp-share
+      environment:
+        - XP_DOMAIN=www.deve.xiaopao69.com
+      volumes:
+        - ./proxy.nginx:/usr/share/nginx/html/share/xiaopao.apk
+
   proxy:
     image: nginx
     volumes:
@@ -162,6 +170,7 @@ services:
       - 80:80
       - 443:443
     depends_on:
+      - share
       - account_server
       - red_server
       - mysqlAdmin
