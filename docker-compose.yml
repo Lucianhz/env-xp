@@ -161,6 +161,38 @@ services:
       volumes:
         - ./proxy.nginx:/usr/share/nginx/html/share/xiaopao.apk
 
+  zookeeper:
+      image: zookeeper
+      environment:
+        - TZ=Asia/Shanghai
+      ports:
+        - 2181:2181
+
+  dubbo-admin:
+      image: riveryang/dubbo-admin
+      environment:
+        - TZ=Asia/Shanghai
+      volumes:
+        - ./dubbo.properties:/root/dubbo.properties
+      ports:
+        - 8080:8080
+      depends_on:
+        - zookeeper
+
+  chat-server:
+      image: chat-server
+      environment:
+        - TZ=Asia/Shanghai
+      volumes:
+        - /dev/urandom:/dev/random
+        - ./context.xml:/usr/local/tomcat/conf/Catalina/localhost/context.xml.default
+        - ./_config.properties:/usr/local/tomcat/config.properties
+      ports:
+        - 20880:20880
+      depends_on:
+        - zookeeper
+        - mysql
+
   proxy:
     image: nginx
     volumes:
