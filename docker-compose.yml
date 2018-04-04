@@ -82,7 +82,8 @@ services:
     #        - node.role==manager
 
   account_server:
-    image: registry.cn-hongkong.aliyuncs.com/mingshz/xp-account:latest
+#    image: registry.cn-hongkong.aliyuncs.com/mingshz/xp-account:latest
+    image: xp-account
     environment:
       - TZ=Asia/Shanghai
       - JPDA_ENABLE=true
@@ -132,6 +133,7 @@ services:
       depends_on:
         - redis_server
         - mysql
+        - zookeeper
       ports:
         - 8001:8000
         - 8180:8080
@@ -161,15 +163,20 @@ services:
       volumes:
         - ./proxy.nginx:/usr/share/nginx/html/share/xiaopao.apk
 
+  cdn:
+      image: xp-cdn
+      volumes:
+        - ./proxy.nginx:/usr/share/nginx/html/xiaopao.apk
+
   zookeeper:
-      image: zookeeper
+      image: zookeeper:3.3
       environment:
         - TZ=Asia/Shanghai
       ports:
         - 2181:2181
 
   dubbo-admin:
-      image: riveryang/dubbo-admin
+      image: riveryang/dubbo-admin:3.0.0
       environment:
         - TZ=Asia/Shanghai
       volumes:
@@ -202,6 +209,7 @@ services:
       - 80:80
       - 443:443
     depends_on:
+      - cdn
       - share
       - account_server
       - red_server
