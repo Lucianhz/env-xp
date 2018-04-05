@@ -97,7 +97,7 @@ server {
 
 server {
     listen       80;
-    server_name  app.*;
+    server_name  app.* s1.* s2.* s3.*;
 
     #    代理至我们的openfire实例
     location =/
